@@ -27,6 +27,8 @@ class candy_shop_db():
 
     def insert_orders(self, orders):
         self.check_connection()
+
+        orders_ids = []
         for order in orders:
             self.curr.execute(
                 'INSERT INTO orders VALUES (%s, %s, %s, %s, DEFAULT, DEFAULT)',
@@ -37,7 +39,9 @@ class candy_shop_db():
                     json.dumps(order['delivery_hours'])
                 )
             )
+            orders_ids.append({'id': order['order_id']})
         self.conn.commit()
+        return orders_ids
 
     def get_courier(self, courier_id):
         self.check_connection()

@@ -101,7 +101,8 @@ def import_orders():
         if bad_fields:
             bad_orders.append(bad_fields)
 
-    abort(400, {'orders': bad_orders})
+    if bad_orders:
+        abort(400, {'orders': bad_orders})
 
     # check if successed
     # возвращать айдишники
