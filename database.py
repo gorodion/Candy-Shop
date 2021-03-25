@@ -20,6 +20,11 @@ class candy_shop_db():
         if not self.conn.is_connected():
             self.conn.reconnect()
 
+    def check_order(self, order_id):
+        self.check_connection()
+        self.curr.execute(f'SELECT COUNT(*) FROM orders where id={order_id}')
+        return self.curr.fetchone()[0]
+
     def insert_orders(self, orders):
         self.check_connection()
         for order in orders:
