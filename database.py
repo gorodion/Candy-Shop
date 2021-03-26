@@ -7,7 +7,7 @@ import datetime
 
 
 COURIER_FIELDS = ('courier_id', 'courier_type', 'regions', 'working_hours', 'rating', 'earnings')
-
+ORDER_FIELDS = ('id', 'weight', 'region', 'delivery_hours', 'courier_id', 'assign_time', 'complete_time')
 
 class CandyShopDB:
     def __init__(self):
@@ -32,20 +32,26 @@ class CandyShopDB:
         self.check_connection()
 
         orders_ids = []
+        query = f'''
+            INSERT INTO
+                orders (id, weight, region, delivery_hours)
+            VALUES (%s, %s, %s, %s)
+        '''
         for order in orders:
             self.curr.execute(
-                'INSERT INTO orders VALUES (%s, %s, %s, %s, DEFAULT, DEFAULT)',
+                query,
                 (
                     order['order_id'],
                     round(order['weight'], 2),
                     order['region'],
-                    json.dumps(map(lambda x: x.strip(), order['delivery_hours']))
+                    json.dumps([x.strip() for x in order['delivery_hours']])
                 )
             )
             orders_ids.append({'id': order['order_id']})
         self.conn.commit()
         return orders_ids
 
+    # объединить с get_courier(?)
     def check_courier(self, courier_id):
         self.check_connection()
         self.curr.execute(f'SELECT COUNT(*) FROM couriers WHERE id={courier_id}')
@@ -82,7 +88,7 @@ class CandyShopDB:
             return True
         return False
 
-    def find_relevant_orders(self, courier_id, max_weight, regions: tuple, working_hours):
+    def find_relevant_orders(self, courier_id, max_weight, regions, working_hours):
         self.check_connection()
 
         # filter weight and region
@@ -93,7 +99,8 @@ class CandyShopDB:
                 orders
             WHERE
                 weight<={max_weight} AND
-                region in {regions}
+                region in ({', '.join(map(str, regions))}) AND
+                courier_id IS NULL
         '''
         self.curr.execute(query)
         # result without working_hours
@@ -111,11 +118,25 @@ class CandyShopDB:
                             for i in working_hours
                             for j in delivery_hours)
             if intersect:
-                res1.append({'id': id})
+                res1.append(id)
 
         if not res1:
             return res1, None
         date_tz = datetime.datetime.now(datetime.timezone.utc)
+
+        # assign relevant orders
+        query = f'''
+            UPDATE
+                orders
+            SET
+                courier_id={courier_id},
+                assign_time='{str(date_tz)}'
+            WHERE
+                id IN ({', '.join(map(str, res1))})
+        '''
+        self.curr.execute(query)
+        self.conn.commit()
+        res1 = [{'id': id} for id in res1]
         return res1, date_tz
 
     # def find_relevant_orders(self, courier_id):

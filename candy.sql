@@ -24,6 +24,7 @@ CREATE TABLE orders (
 	region INT NOT NULL,
 	delivery_hours JSON NOT NULL,
 	courier_id BIGINT UNSIGNED,
+	assign_time DATETIME,
 	complete_time DATETIME,
 	FOREIGN KEY (courier_id)
 		REFERENCES couriers (id)

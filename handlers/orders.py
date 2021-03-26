@@ -13,6 +13,7 @@ COURIER_TYPE_CAPACITY = {
     'car': 50
 }
 
+
 def check_input_json(content):
     if not content or not isinstance(content, dict):
         abort(400, 'Invalid request body')
@@ -23,7 +24,7 @@ def valid_time(hours_min: str):
     if matching is None or len(matching.groups()) != 2:
         return False
 
-    # второй член больше первого
+    # проверить, что второй член больше первого
     for t in matching.groups():
         try:
             datetime.datetime.strptime(t, '%H:%M')
@@ -129,16 +130,14 @@ def assign_orders():
     courier_id = courier_info['courier_id']
     courier_type = courier_info['courier_type']
     max_weight = COURIER_TYPE_CAPACITY[courier_type]
-    regions = tuple(courier_info['regions'])
+    regions = courier_info['regions']
     working_hours = courier_info['working_hours']
 
     relevant_orders, date_tz = db.find_relevant_orders(courier_id, max_weight, regions, working_hours)
     if not relevant_orders:
         return jsonify(orders=[])
 
-
-
-    return jsonify(orders=relevant_orders, assign_time=str(date_tz).replace('+00:00', 'Z')), 201
+    return jsonify(orders=relevant_orders, assign_time=str(date_tz).replace(' ', 'T').replace('+00:00', 'Z')), 201
 
 
 def valid_tz(dt):
