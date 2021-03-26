@@ -124,6 +124,7 @@ class CandyShopDB:
             return res1, None
         date_tz = datetime.datetime.now(datetime.timezone.utc)
 
+        # выделиить в другую функцию
         # assign relevant orders
         query = f'''
             UPDATE
@@ -139,38 +140,31 @@ class CandyShopDB:
         res1 = [{'id': id} for id in res1]
         return res1, date_tz
 
-    # def find_relevant_orders(self, courier_id):
-    #     self.check_connection()
-    #     self.curr.execute(f'SELECT * FROM couriers WHERE couriers.id={courier_id}')
-    #     courier_info = self.curr.fetchone()
-    #     if not courier_info:
-    #         return False
-    #     _, courier_type, regions, working_hours, rating, earnings = courier_info
-    #
-    #     return self.curr.fetchone()[0]
-
-    def mark_as_completed(self, content):
+    def check_order_assignment(self, courier_id, order_id):
         self.check_connection()
-        courier_id = content['courier_id']
-        order_id = content['order_id']
-        complete_time = content['complete_time']
-        # change complete_time
+        query = f'''
+            SELECT
+                COUNT(*)
+            FROM
+                orders
+            WHERE
+                id={order_id} AND
+                courier_id={courier_id}
+        '''
+        self.curr.execute(query)
+        return self.curr.fetchone()[0]
+
+    def mark_as_completed(self, courier_id, order_id, complete_time):
+        self.check_connection()
+        # менять ли complete_time?
         query = f'''
             UPDATE 
                 orders
             SET
-                complete_time={complete_time}
+                complete_time='{complete_time}'
             WHERE 
                 courier_id={courier_id} AND
                 order_id={order_id}
             '''
         self.curr.execute(query)
         self.conn.commit()
-
-    # def store_db(self, item):
-    #     try:
-	# 		self.check_connection()
-	# 		...
-    #         self.conn.commit()
-    #     except Error as e:
-    #         print('Database problem:', e)

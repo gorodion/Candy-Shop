@@ -151,18 +151,26 @@ def valid_tz(dt):
 @app.route('/orders/complete', methods=['POST'])
 def mark_as_completed():
     content = request.json
-    if not content:
-        abort(400, 'Invalid request body')
-
+    check_input_json(content)
     if 'courier_id' not in content \
-        or 'order_id' not in content \
-        or 'complete_time' not in content:
-        abort(400, 'There is no any keys')
+            or 'order_id' not in content \
+            or 'complete_time' not in content:
+        abort(400, 'Bad request')
 
     if not isinstance(content['courier_id'], int) \
-        or not isinstance(content['order_id'], int) \
-        or not isinstance(content['complete_time'], str) \
-        or not valid_tz(content['complete_time']):
+            or not isinstance(content['order_id'], int) \
+            or not isinstance(content['complete_time'], str) \
+            or not valid_tz(content['complete_time']):
         abort(400, 'Bad request')
-    db.mark_as_completed(content)
-    return jsonify(order_id=content['courier_id'])
+
+    courier_id = content['courier_id']
+    order_id = content['order_id']
+    complete_time = parse(content['complete_time'])
+
+    correct_order = db.check_order_assignment(courier_id, order_id)
+    if not correct_order:
+        abort(400, 'Bad request')
+
+    # если complete_time позже assign_time
+    db.mark_as_completed(courier_id, order_id, complete_time)
+    return jsonify(order_id=order_id)
