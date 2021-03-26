@@ -1,5 +1,5 @@
 from flask import Flask
-from database import candy_shop_db
+from database import CandyShopDB
 
-db = candy_shop_db()
+db = CandyShopDB()
 app = Flask(__name__)

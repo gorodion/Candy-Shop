@@ -132,3 +132,4 @@ dmypy.json
 /config.py
 /logs.html
 /orders.json
+/bad_orders.json

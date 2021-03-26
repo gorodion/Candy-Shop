@@ -3,12 +3,15 @@ from dateutil.parser import parse
 from misc import app, db
 import json
 import re
-from datetime import datetime
+import datetime
 from collections import defaultdict
 
 
-ORDER_JSON_FIELDS = ('delivery_hours',)
-
+COURIER_TYPE_CAPACITY = {
+    'foot': 10,
+    'bike': 15,
+    'car': 50
+}
 
 def check_input_json(content):
     if not content or not isinstance(content, dict):
@@ -16,14 +19,14 @@ def check_input_json(content):
 
 
 def valid_time(hours_min: str):
-    matching = re.match(r'(\d\d:\d\d)-(\d\d:\d\d)', hours_min)
+    matching = re.match(r'^(\d\d:\d\d)-(\d\d:\d\d)$', hours_min.strip())
     if matching is None or len(matching.groups()) != 2:
         return False
 
     # второй член больше первого
     for t in matching.groups():
         try:
-            datetime.strptime(t, '%H:%M')
+            datetime.datetime.strptime(t, '%H:%M')
         except ValueError:
             return False
     return True
@@ -105,22 +108,37 @@ def import_orders():
         abort(400, {'orders': bad_orders})
 
     # check if successed
-    # возвращать айдишники
     orders_ids = db.insert_orders(data)
     return jsonify(orders=orders_ids), 201
+
 
 @app.route('/orders/assign', methods=['POST'])
 def assign_orders():
     content = request.json
-    if not content or 'courier_id' not in content:
-        abort(400, 'Invalid request body')
+    check_input_json(content)
+
+    if 'courier_id' not in content:
+        abort(400, 'Bad request')
     courier_id = content['courier_id']
-    courier_info = db.find_relevant_orders(courier_id)
-    if not courier_info:
+
+    if not db.check_courier(courier_id):
         abort(400, 'Bad request')
 
-    db.find_relevant(courier_id)
-    return jsonify()
+    courier_info = db.get_courier(courier_id)
+
+    courier_id = courier_info['courier_id']
+    courier_type = courier_info['courier_type']
+    max_weight = COURIER_TYPE_CAPACITY[courier_type]
+    regions = tuple(courier_info['regions'])
+    working_hours = courier_info['working_hours']
+
+    relevant_orders, date_tz = db.find_relevant_orders(courier_id, max_weight, regions, working_hours)
+    if not relevant_orders:
+        return jsonify(orders=[])
+
+
+
+    return jsonify(orders=relevant_orders, assign_time=str(date_tz).replace('+00:00', 'Z')), 201
 
 
 def valid_tz(dt):

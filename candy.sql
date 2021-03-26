@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS couriers;
 CREATE TABLE couriers (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
@@ -11,10 +12,10 @@ CREATE TABLE couriers (
 INSERT INTO
 	couriers (id, courier_type, regions, working_hours)
 VALUES
-	(1, 'foot', '[3, 4, 5]', '["13:00", "20:00"]'),
-	(2, 'car', '[2, 3, 5]', '["9:00", "21:00"]'),
-	(3, 'bike', '[1, 3, 4]', '["10:00", "16:00"]'),
-	(4, 'bike', '[2, 4]', '["15:00", "20:00"]');
+	(1, 'foot', '[3, 4, 5]', '["13:00-20:00"]'),
+	(2, 'car', '[2, 3, 5]', '["09:00-13:00", "15:00-21:00"]'),
+	(3, 'bike', '[1, 3, 4]', '["10:00-16:00"]'),
+	(4, 'bike', '[2, 4]', '["15:00-20:00"]');
 
 DROP TABLE IF EXISTS orders;
 CREATE TABLE orders (
@@ -31,6 +32,6 @@ CREATE TABLE orders (
 INSERT INTO 
 	orders (id, weight, region, delivery_hours)
 VALUES
-	(1, 3, 5, '["15:30", "16:30"]'),
-	(2, 0.5, 2, '["12:00", "13:00"]'),
-	(3, 1, 3, '["15:00", "16:00"]')
+	(1, 3, 5, '["15:30-16:30"]'),
+	(2, 0.5, 2, '["12:00-13:00"]'),
+	(3, 1, 3, '["15:00-16:00"]');
