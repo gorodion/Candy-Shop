@@ -1,10 +1,7 @@
-from flask import Flask, jsonify, abort, make_response, request
+from flask import jsonify, abort, request
 from dateutil.parser import parse
 from misc import app, db
-import json
-import re
-import datetime
-from collections import defaultdict
+from .common_funcs import check_input_json, validate_interval_list
 
 
 COURIER_TYPE_CAPACITY = {
@@ -14,31 +11,13 @@ COURIER_TYPE_CAPACITY = {
 }
 
 
-def check_input_json(content):
-    if not content or not isinstance(content, dict):
-        abort(400, 'Invalid request body')
-
-
-def valid_time(hours_min: str):
-    matching = re.match(r'^(\d\d:\d\d)-(\d\d:\d\d)$', hours_min.strip())
-    if matching is None or len(matching.groups()) != 2:
-        return False
-
-    # проверить, что второй член больше первого
-    for t in matching.groups():
-        try:
-            datetime.datetime.strptime(t, '%H:%M')
-        except ValueError:
-            return False
-    return True
-
-
 def validate_order(order: dict):
     if not isinstance(order, dict):
-        return {"order": "is not JSON object"}
+        return {"order": "type is not object"}
 
     bad_fields = {}
 
+    # всегда есть
     order_id = order['order_id']
     if not isinstance(order_id, int):
         bad_fields['order_id'] = 'is not integer'
@@ -71,13 +50,7 @@ def validate_order(order: dict):
         bad_fields['delivery_hours'] = 'missing field'
     else:
         delivery_hours = order['delivery_hours']
-        if not isinstance(delivery_hours, list):
-            bad_fields['delivery_hours'] = 'is not array'
-        # расширить до выдачи индексов некорректных элементов
-        elif not all(map(lambda x: isinstance(x, str), delivery_hours)):
-            bad_fields['delivery_hours'] = 'not all elements are strings'
-        elif not all(map(lambda x: valid_time(x), delivery_hours)):
-            bad_fields['delivery_hours'] = 'not all elements are in the correct time format'
+        validate_interval_list(delivery_hours, bad_fields, key='delivery_hours')
 
     # только когда все поля корректные
     if len(order) > 4:
@@ -93,10 +66,10 @@ def import_orders():
     content = request.json
     check_input_json(content)
 
-    #  `data` есть всегда
+    #  `data` есть всегда и содержит список элементов
     # if 'data' not in content:
     #     abort(400, 'data not in request body')
-
+    print(content)
     data = content['data']
 
     bad_orders = []
@@ -133,6 +106,8 @@ def assign_orders():
     regions = courier_info['regions']
     working_hours = courier_info['working_hours']
 
+    # разделить на несколько функций
+    # searching for relevant orders + assign
     relevant_orders, date_tz = db.find_relevant_orders(courier_id, max_weight, regions, working_hours)
     if not relevant_orders:
         return jsonify(orders=[])

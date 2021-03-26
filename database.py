@@ -9,6 +9,7 @@ import datetime
 COURIER_FIELDS = ('courier_id', 'courier_type', 'regions', 'working_hours', 'rating', 'earnings')
 ORDER_FIELDS = ('id', 'weight', 'region', 'delivery_hours', 'courier_id', 'assign_time', 'complete_time')
 
+
 class CandyShopDB:
     def __init__(self):
         self.conn = connector.connect(
@@ -22,6 +23,50 @@ class CandyShopDB:
     def check_connection(self):
         if not self.conn.is_connected():
             self.conn.reconnect()
+
+    def check_courier(self, courier_id):
+        self.check_connection()
+        self.curr.execute(f'SELECT COUNT(*) FROM couriers WHERE id={courier_id}')
+        return self.curr.fetchone()[0]
+
+    def insert_couriers(self, couriers):
+        self.check_connection()
+
+        couriers_ids = []
+        query = '''
+            INSERT INTO
+                couriers (id, courier_type, regions, working_hours)
+            VALUES 
+                (%s, %s, %s, %s)
+        '''
+        for courier in couriers:
+            self.curr.execute(
+                query,
+                (
+                    courier['courier_id'],
+                    courier['courier_type'],
+                    json.dumps(courier['regions']),
+                    json.dumps([x.strip() for x in courier['working_hours']])
+                )
+            )
+            couriers_ids.append({'id': courier['courier_id']})
+        self.conn.commit()
+        return couriers_ids
+
+    def get_courier(self, courier_id):
+        self.check_connection()
+        self.curr.execute(f'SELECT * FROM couriers WHERE id={courier_id}')
+        spam = self.curr.fetchone()
+        if spam is None:
+            return spam
+
+        courier_info = {}
+        for field, val in zip(COURIER_FIELDS, spam):
+            if field in ('regions', 'working_hours'):
+                val = json.loads(val)
+            courier_info[field] = val
+
+        return courier_info
 
     def check_order(self, order_id):
         self.check_connection()
@@ -50,27 +95,6 @@ class CandyShopDB:
             orders_ids.append({'id': order['order_id']})
         self.conn.commit()
         return orders_ids
-
-    # объединить с get_courier(?)
-    def check_courier(self, courier_id):
-        self.check_connection()
-        self.curr.execute(f'SELECT COUNT(*) FROM couriers WHERE id={courier_id}')
-        return self.curr.fetchone()[0]
-
-    def get_courier(self, courier_id):
-        self.check_connection()
-        self.curr.execute(f'SELECT * FROM couriers WHERE id={courier_id}')
-        spam = self.curr.fetchone()
-        if spam is None:
-            return spam
-
-        courier_info = {}
-        for field, val in zip(COURIER_FIELDS, spam):
-            if field in ('regions', 'working_hours'):
-                val = json.loads(val)
-            courier_info[field] = val
-
-        return courier_info
 
     @staticmethod
     def extract_interval_ends(interval: str):
@@ -124,7 +148,7 @@ class CandyShopDB:
             return res1, None
         date_tz = datetime.datetime.now(datetime.timezone.utc)
 
-        # выделиить в другую функцию
+        # выделить в другую функцию
         # assign relevant orders
         query = f'''
             UPDATE
@@ -142,7 +166,7 @@ class CandyShopDB:
 
     def check_order_assignment(self, courier_id, order_id):
         self.check_connection()
-        # проверять, что assign_time не null?
+        # дополнительно проверять, что assign_time не null?
         query = f'''
             SELECT
                 COUNT(*)
