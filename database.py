@@ -142,6 +142,7 @@ class CandyShopDB:
 
     def check_order_assignment(self, courier_id, order_id):
         self.check_connection()
+        # проверять, что assign_time не null?
         query = f'''
             SELECT
                 COUNT(*)
@@ -161,10 +162,10 @@ class CandyShopDB:
             UPDATE 
                 orders
             SET
-                complete_time='{complete_time}'
+                complete_time='{str(complete_time)}'
             WHERE 
-                courier_id={courier_id} AND
-                order_id={order_id}
+                id={order_id} AND
+                courier_id={courier_id}
             '''
         self.curr.execute(query)
         self.conn.commit()

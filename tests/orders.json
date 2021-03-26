@@ -1,0 +1,21 @@
+{
+    "data": [
+		{
+			"order_id": 1,
+			"weight": 2,
+			"region": 3,
+			"delivery_hours": [
+				"15:00-16:00",
+				"18:30-19:40"
+			]
+		},
+		{
+			"order_id": 2,
+			"weight": 10.5,
+			"region": 2,
+			"delivery_hours": [
+				"13:00-14:00"
+			]
+		}
+	]
+}
