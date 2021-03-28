@@ -4,6 +4,7 @@ from config import DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE
 import json
 import re
 import datetime
+from constants import COURIER_FIELDS
 
 
 class CandyShopDB:

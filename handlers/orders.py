@@ -1,15 +1,8 @@
 from flask import jsonify, abort, request
 from dateutil.parser import parse
 from misc import app, db
-from constants import REQUIRED_ORDER_FIELDS
+from constants import REQUIRED_ORDER_FIELDS, COURIER_TYPE_CAPACITY
 from .common_funcs import validate_interval_list
-
-
-COURIER_TYPE_CAPACITY = {
-    'foot': 10,
-    'bike': 15,
-    'car': 50
-}
 
 
 def validate_order(order: dict):

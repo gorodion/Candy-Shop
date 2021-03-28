@@ -40,6 +40,6 @@
 -extra_properties
 
 Рефакторинг:
--переписать запросы
+-переписать запросы (без f-строк)
 -объединить/разделить функции между database.py и orders.py(couriers.py)
 -обобщить функции post /orders, post /couriers
