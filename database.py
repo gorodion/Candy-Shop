@@ -6,10 +6,6 @@ import re
 import datetime
 
 
-COURIER_FIELDS = ('courier_id', 'courier_type', 'regions', 'working_hours', 'rating', 'earnings')
-ORDER_FIELDS = ('id', 'weight', 'region', 'delivery_hours', 'courier_id', 'assign_time', 'complete_time')
-
-
 class CandyShopDB:
     def __init__(self):
         self.conn = connector.connect(

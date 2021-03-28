@@ -3,11 +3,6 @@ import re
 import datetime
 
 
-def check_input_json(content):
-    if not content or not isinstance(content, dict):
-        abort(400, 'Invalid request body')
-
-
 def valid_time(hours_min: str):
     matching = re.match(r'^(\d\d:\d\d)-(\d\d:\d\d)$', hours_min.strip())
     if matching is None or len(matching.groups()) != 2:

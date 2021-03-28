@@ -1,8 +1,7 @@
 from flask import jsonify, request, abort
 from misc import app, db
-from .common_funcs import check_input_json, validate_interval_list
-
-COURIER_TYPES = ('foot', 'bike', 'car')
+from .common_funcs import validate_interval_list
+from constants import COURIER_TYPES, REQUIRED_COURIER_FIELDS
 
 
 def validate_courier(courier: dict):
@@ -44,8 +43,7 @@ def validate_courier(courier: dict):
         working_hours = courier['working_hours']
         validate_interval_list(working_hours, bad_fields, key='working_hours')
 
-    # только когда все поля корректные
-    if len(courier) > 4:
+    if set(courier.keys()) - set(REQUIRED_COURIER_FIELDS):
         bad_fields['has_extra_fields'] = True
 
     if bad_fields:
@@ -56,11 +54,6 @@ def validate_courier(courier: dict):
 @app.route('/couriers', methods=['POST'])
 def import_couriers():
     content = request.json
-    check_input_json(content)
-
-    #  `data` есть всегда и содержит список элементов
-    # if 'data' not in content:
-    #     abort(400, 'data not in request body')
     data = content['data']
 
     bad_couriers = []

@@ -1,7 +1,8 @@
 from flask import jsonify, abort, request
 from dateutil.parser import parse
 from misc import app, db
-from .common_funcs import check_input_json, validate_interval_list
+from constants import REQUIRED_ORDER_FIELDS
+from .common_funcs import validate_interval_list
 
 
 COURIER_TYPE_CAPACITY = {
@@ -52,8 +53,7 @@ def validate_order(order: dict):
         delivery_hours = order['delivery_hours']
         validate_interval_list(delivery_hours, bad_fields, key='delivery_hours')
 
-    # только когда все поля корректные
-    if len(order) > 4:
+    if set(order.keys()) - set(REQUIRED_ORDER_FIELDS):
         bad_fields['has_extra_fields'] = True
 
     if bad_fields:
@@ -64,12 +64,6 @@ def validate_order(order: dict):
 @app.route('/orders', methods=['POST'])
 def import_orders():
     content = request.json
-    check_input_json(content)
-
-    #  `data` есть всегда и содержит список элементов
-    # if 'data' not in content:
-    #     abort(400, 'data not in request body')
-    print(content)
     data = content['data']
 
     bad_orders = []
@@ -89,7 +83,6 @@ def import_orders():
 @app.route('/orders/assign', methods=['POST'])
 def assign_orders():
     content = request.json
-    check_input_json(content)
 
     if 'courier_id' not in content:
         abort(400, 'Bad request')
@@ -126,7 +119,7 @@ def valid_tz(dt):
 @app.route('/orders/complete', methods=['POST'])
 def mark_as_completed():
     content = request.json
-    check_input_json(content)
+
     if 'courier_id' not in content \
             or 'order_id' not in content \
             or 'complete_time' not in content:

@@ -22,7 +22,8 @@
             "delivery_hours": [
                 "12:00-13:00",
                 "16:00-17:00"
-            ]
+            ],
+            "city": "Moscow"
         },
         {
             "order_id": 3,
