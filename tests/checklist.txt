@@ -39,6 +39,13 @@
 -complete_time позже assign_time (!) - учесть T Z
 -extra_properties
 
+PATCH /orders/courier/$courier_id
+-пустой regions (not in {', '.join})
+
+GET /couriers/$courier_id
+-select time_to_sec(timediff(complete_time, assign_time)) from  orders;
+
+
 Рефакторинг:
 -переписать запросы (без f-строк)
 -объединить/разделить функции между database.py и orders.py(couriers.py)

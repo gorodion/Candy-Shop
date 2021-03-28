@@ -60,6 +60,7 @@ class CandyShopDB:
     # without reconnect
     # transaction is still ongoing
     def find_irrelevant_orders(self, courier_id):
+        # select courier_info
         self.curr.execute(
             f'''
             SELECT
@@ -155,18 +156,27 @@ class CandyShopDB:
         self.conn.commit()
         return courier_info
 
+    def calculate_rating(self, courier_id):
+        self.curr.execute(
+            f'''
+            SELECT *
+            FROM orders
+            WHERE courier_id={courier_id} AND complete_time IS NOT NULL
+            '''
+        )
+        res = self.curr.fetchall()
+        rating = 0
+        return rating
+
     def get_courier(self, courier_id):
         self.check_connection()
         self.curr.execute(f'SELECT * FROM couriers WHERE id={courier_id}')
-        spam = self.curr.fetchone()
-        if spam is None:
-            return spam
+        courier_values = self.curr.fetchone()
+        if courier_values is None:
+            return courier_values
 
-        courier_info = {}
-        for field, val in zip(COURIER_FIELDS, spam):
-            if field in ('regions', 'working_hours'):
-                val = json.loads(val)
-            courier_info[field] = val
+        courier_info = self.map_courier_info(courier_values)
+        courier_info['rating'] = self.calculate_rating(courier_id)
 
         return courier_info
 
@@ -284,14 +294,65 @@ class CandyShopDB:
     def mark_as_completed(self, courier_id, order_id, complete_time):
         self.check_connection()
         # менять ли complete_time?
-        query = f'''
-            UPDATE 
-                orders
-            SET
-                complete_time='{str(complete_time)}'
-            WHERE 
-                id={order_id} AND
-                courier_id={courier_id}
-            '''
-        self.curr.execute(query)
-        self.conn.commit()
+        self.curr.execute(f'''
+            SELECT COUNT(*) FROM orders 
+            WHERE id={order_id} AND courier_id={courier_id} AND complete_time IS NULL''')
+        not_marked = self.curr.fetchone()[0]
+
+        if not_marked:
+            self.curr.execute(
+                f'''
+                UPDATE orders
+                SET complete_time='{str(complete_time)}'
+                WHERE id={order_id} AND courier_id={courier_id}
+                '''
+            )
+            self.curr.execute(
+                f'''
+                UPDATE couriers 
+                SET earnings = earnings + 500 * (CASE 
+                    WHEN courier_type='foot' THEN 2
+                    WHEN courier_type='bike' THEN 5
+                    WHEN courier_type='car' THEN 9
+                    END)
+                WHERE id={courier_id}
+                '''
+            )
+            self.conn.commit()
+
+
+def decorator(func):
+    def spam_func(self, *args, **kwargs):
+        self.reconnect()
+        res = func(self, *args, **kwargs)
+        self.disconnect()
+        return res
+
+    return spam_func
+
+
+class A():
+    k = 5
+
+    def reconnect(self):
+        print('reconnect')
+
+    def disconnect(self):
+        print('disconnect')
+
+    @decorator
+    def func(self, a, p=15):
+        return print(self.k + a + p)
+
+def spam():
+    try:
+        cnn = CandyShopDB().conn
+        cnn.do_something()
+    except Exception:
+        cnn.rollback()
+        logging.error("Database connection error")
+        raise
+    else:
+        cnn.commit()
+    finally:
+        cnn.close()
