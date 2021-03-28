@@ -109,8 +109,11 @@ def patch_courier(courier_id):
     result = db.patch_courier(courier_id, content)
     return jsonify(result)
 
+
 # @app.route('/couriers/<int:courier_id>', methods=['GET'])
 # def get_courier(courier_id):
+#     if not db.check_courier(courier_id):
+#         abort(404)
 #     res = db.get_courier(courier_id)
 #     if not res:
 #         abort(404)

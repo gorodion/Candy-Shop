@@ -4,7 +4,7 @@ from config import DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE
 import json
 import re
 import datetime
-from constants import COURIER_FIELDS
+from constants import COURIER_FIELDS, COURIER_TYPE_CAPACITY, REQUIRED_COURIER_FIELDS
 
 
 class CandyShopDB:
@@ -49,6 +49,111 @@ class CandyShopDB:
             couriers_ids.append({'id': courier['courier_id']})
         self.conn.commit()
         return couriers_ids
+
+    @staticmethod
+    def map_courier_info(courier_values):
+        courier_info = dict(zip(COURIER_FIELDS, courier_values))
+        for json_field in ('regions', 'working_hours'):
+            courier_info[json_field] = json.loads(courier_info[json_field])
+        return courier_info
+
+    # without reconnect
+    # transaction is still ongoing
+    def find_irrelevant_orders(self, courier_id):
+        self.curr.execute(
+            f'''
+            SELECT
+                id, courier_type, regions, working_hours
+            FROM
+                couriers
+            WHERE   
+                id={courier_id}
+            '''
+        )
+        courier_values = self.curr.fetchone()
+        courier_info = self.map_courier_info(courier_values)
+
+        # updating by weight and region
+        self.curr.execute(
+            f'''
+            UPDATE
+                orders
+            SET
+                courier_id=NULL,
+                assign_time=NULL
+            WHERE
+                courier_id={courier_id} AND
+                complete_time IS NOT NULL AND
+                (
+                    weight>{COURIER_TYPE_CAPACITY[courier_info['courier_type']]} OR
+                    region NOT IN ({', '.join(map(str, courier_info['regions']))})
+                )
+            '''
+        )
+
+        # updating by working_hours
+        # проверять assign_time?
+        query = f'''
+            SELECT
+                id, delivery_hours
+            FROM
+                orders
+            WHERE
+                courier_id={courier_id} AND
+                complete_time IS NOT NULL
+        '''
+        self.curr.execute(query)
+        res0 = self.curr.fetchall()
+        working_hours = courier_info['working_hours']
+
+        res1 = []
+        for (id, delivery_hours) in res0:
+            delivery_hours = json.loads(delivery_hours)
+            intersect = any(self.intervals_intersect(i, j)
+                            for i in working_hours
+                            for j in delivery_hours)
+            if not intersect:
+                res1.append(id)
+        if res1:
+            self.curr.execute(
+                f'''
+                UPDATE
+                    orders
+                SET
+                    courier_id=NULL,
+                    assign_time=NULL,
+                WHERE
+                    id IN ({', '.join(map(str, res1))})
+                '''
+            )
+        return courier_info
+
+    def patch_courier(self, courier_id, content):
+        self.check_connection()
+
+        query = f'''
+            UPDATE
+                couriers
+            SET
+                courier_type=IF(%s, %s, courier_type),
+                regions=IF(%s, %s, regions),
+                working_hours=IF(%s, %s, working_hours)
+            WHERE
+                id=%s
+            '''
+        self.curr.execute(
+            query,
+            (
+                'courier_type' in content, content.get('courier_type'),
+                'regions' in content, json.dumps(content.get('regions')),
+                'working_hours' in content, json.dumps(content.get('working_hours')),
+                courier_id
+            )
+        )
+
+        courier_info = self.find_irrelevant_orders(courier_id)
+        self.conn.commit()
+        return courier_info
 
     def get_courier(self, courier_id):
         self.check_connection()
@@ -120,7 +225,7 @@ class CandyShopDB:
                 orders
             WHERE
                 weight<={max_weight} AND
-                region in ({', '.join(map(str, regions))}) AND
+                region IN ({', '.join(map(str, regions))}) AND
                 courier_id IS NULL
         '''
         self.curr.execute(query)
