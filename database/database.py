@@ -87,7 +87,6 @@ class CandyShopDB:
             return courier_info
 
         # updating by weight and region
-        # проверять assign_time?
         self.curr.execute(
             f'''
             UPDATE orders
@@ -105,7 +104,6 @@ class CandyShopDB:
         )
 
         # updating by working_hours
-        # проверять assign_time?
         query = f'''
             SELECT id, delivery_hours
             FROM orders
@@ -229,7 +227,6 @@ class CandyShopDB:
 
     @staticmethod
     def extract_interval_ends(interval: str):
-        # проверять на ошибки?
         matching = re.match(r'^(\d\d:\d\d)-(\d\d:\d\d)$', interval.strip()).groups()
         return tuple(datetime.datetime.strptime(x, '%H:%M').time() for x in matching)
 
@@ -261,7 +258,6 @@ class CandyShopDB:
         # result without working_hours
         res0 = self.curr.fetchall()
 
-        # можно избавиться
         if not res0:
             return res0, None
 
@@ -279,7 +275,6 @@ class CandyShopDB:
             return res1, None
         date_tz = datetime.datetime.now(datetime.timezone.utc)
 
-        # выделить в другую функцию
         # assign relevant orders
         query = f'''
             UPDATE
@@ -298,7 +293,6 @@ class CandyShopDB:
     # also returns assign_time
     def check_order_assignment(self, courier_id, order_id):
         self.check_connection()
-        # дополнительно проверять, что assign_time не null?
         query = f'''
             SELECT
                 COUNT(*), assign_time
@@ -313,7 +307,6 @@ class CandyShopDB:
 
     def mark_as_completed(self, courier_id, order_id, complete_time):
         self.check_connection()
-        # менять ли complete_time?
         self.curr.execute(f'''
             SELECT COUNT(*) FROM orders 
             WHERE id={order_id} AND courier_id={courier_id} AND complete_time IS NULL''')

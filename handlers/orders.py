@@ -66,7 +66,6 @@ def import_orders():
     if bad_orders:
         abort(400, {'orders': bad_orders})
 
-    # check if successed
     orders_ids = db.insert_orders(data)
     return jsonify(orders=orders_ids), 201
 
@@ -93,7 +92,6 @@ def assign_orders():
     if not regions or not working_hours:
         return jsonify(orders=[])
 
-    # разделить на несколько функций
     # searching for relevant orders + assign
     relevant_orders, date_tz = db.find_relevant_orders(courier_id, max_weight, regions, working_hours)
     if not relevant_orders:
