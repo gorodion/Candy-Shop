@@ -1,5 +1,5 @@
 # Candy-Shop
-Rest-api for handling delivery requests. Written on Flask
+Rest-api for handling delivery requests. Written on Flask with MySQL database connection
 # Instruction
 In bash shell run the following commands:
 ```
