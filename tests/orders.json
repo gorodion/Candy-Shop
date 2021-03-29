@@ -2,10 +2,10 @@
     "data": [
 		{
 			"order_id": 1,
-			"weight": 2,
-			"region": 3,
+			"weight": 10,
+			"region": 5,
 			"delivery_hours": [
-				"15:00-16:00",
+				"15:30-16:30",
 				"18:30-19:40"
 			]
 		},
@@ -14,7 +14,15 @@
 			"weight": 10.5,
 			"region": 2,
 			"delivery_hours": [
-				"13:00-14:00"
+				"12:00-14:00"
+			]
+		},
+		{
+			"order_id": 3,
+			"weight": 40,
+			"region": 3,
+			"delivery_hours": [
+				"15:00-17:00"
 			]
 		}
 	]

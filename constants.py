@@ -10,5 +10,3 @@ COURIER_TYPE_CAPACITY = {
 }
 
 REQUIRED_ORDER_FIELDS = ('order_id', 'weight', 'region', 'delivery_hours')
-# ORDER_FIELDS = ('order_id', 'weight', 'region', 'delivery_hours', 'courier_id', 'assign_time', 'complete_time')
-
