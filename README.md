@@ -1,7 +1,7 @@
 # Candy-Shop
 Rest-api for handling delivery requests. Written on Flask
 # Instruction
-In bash shell run following commands:
+In bash shell run the following commands:
 ```
 sudo apt-get update
 sudo apt-get install python3.9
@@ -26,7 +26,7 @@ DB_USER = 'YOUR_USER'
 DB_PASSWORD = 'YOUR_PASSWORD'
 DB_DATABASE = 'YOUR_DATABASE'
 ```
-And finnaly run script:
+And finally run script:
 ```
 sudo python3.9 app.py
 ```
