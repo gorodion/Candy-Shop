@@ -60,31 +60,28 @@ class CandyShopDB:
     # without reconnect
     # transaction is still ongoing
     def find_irrelevant_orders(self, courier_id):
-        # select courier_info
+        # select updated courier_info
         self.curr.execute(
             f'''
-            SELECT
-                id, courier_type, regions, working_hours
-            FROM
-                couriers
-            WHERE   
-                id={courier_id}
+            SELECT id, courier_type, regions, working_hours
+            FROM couriers
+            WHERE id={courier_id}
             '''
         )
         courier_values = self.curr.fetchone()
         courier_info = self.map_courier_info(courier_values)
 
         # updating by weight and region
+        # проверять assign_time?
         self.curr.execute(
             f'''
-            UPDATE
-                orders
+            UPDATE orders
             SET
                 courier_id=NULL,
                 assign_time=NULL
             WHERE
                 courier_id={courier_id} AND
-                complete_time IS NOT NULL AND
+                complete_time IS NULL AND
                 (
                     weight>{COURIER_TYPE_CAPACITY[courier_info['courier_type']]} OR
                     region NOT IN ({', '.join(map(str, courier_info['regions']))})
@@ -95,13 +92,11 @@ class CandyShopDB:
         # updating by working_hours
         # проверять assign_time?
         query = f'''
-            SELECT
-                id, delivery_hours
-            FROM
-                orders
+            SELECT id, delivery_hours
+            FROM orders
             WHERE
                 courier_id={courier_id} AND
-                complete_time IS NOT NULL
+                complete_time IS NULL
         '''
         self.curr.execute(query)
         res0 = self.curr.fetchall()
@@ -116,13 +111,22 @@ class CandyShopDB:
             if not intersect:
                 res1.append(id)
         if res1:
+            print(f'''
+                UPDATE
+                    orders
+                SET
+                    courier_id=NULL,
+                    assign_time=NULL
+                WHERE
+                    id IN ({', '.join(map(str, res1))})
+                ''')
             self.curr.execute(
                 f'''
                 UPDATE
                     orders
                 SET
                     courier_id=NULL,
-                    assign_time=NULL,
+                    assign_time=NULL
                 WHERE
                     id IN ({', '.join(map(str, res1))})
                 '''

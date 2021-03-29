@@ -6,9 +6,6 @@ from .common_funcs import validate_interval_list
 
 
 def validate_order(order: dict):
-    if not isinstance(order, dict):
-        return {"order": "type is not object"}
-
     bad_fields = {}
 
     # всегда есть

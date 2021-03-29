@@ -16,13 +16,10 @@ def validate_regions(regions, bad_fields):
     if not isinstance(regions, list):
         bad_fields['regions'] = 'is not an array'
     elif not all(map(lambda x: isinstance(x, int) and x > 0, regions)):
-        bad_fields['regions'] = 'not all elements are integers'
+        bad_fields['regions'] = 'not all elements are positive integers'
 
 
 def validate_courier(courier: dict):
-    if not isinstance(courier, dict):
-        return {"courier": "type is not object"}
-
     bad_fields = {}
 
     # есть всегда
@@ -74,7 +71,6 @@ def import_couriers():
     if bad_couriers:
         abort(400, {'couriers': bad_couriers})
 
-    # check if successed
     couriers_ids = db.insert_couriers(data)
     return jsonify(couriers=couriers_ids), 201
 
@@ -91,21 +87,17 @@ def patch_courier(courier_id):
 
     bad_fields = {}
     if 'courier_type' in content:
-        # проверить изменение веса в базе
         courier_type = content['courier_type']
         validate_courier_type(courier_type, bad_fields)
     if 'regions' in content:
-        # проверить регионы в базе
         regions = content['regions']
         validate_regions(regions, bad_fields)
     if 'working_hours' in content:
-        # проверить изменение графика
         working_hours = content['working_hours']
         validate_interval_list(working_hours, bad_fields, key='working_hours')
     if bad_fields:
         abort(400, 'Bad request')
 
-    # должен возвращать словарь из couirer_id, courier_type, regions, working_hours
     result = db.patch_courier(courier_id, content)
     return jsonify(result)
 
