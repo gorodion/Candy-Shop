@@ -7,6 +7,7 @@ Rest-api for handling delivery requests. Written on Flask with MySQL database co
 * `POST /orders/assign`
 * `POST /orders/complete`
 * `GET /couriers/$courier_id`
+
 The details in openapi.yaml
 # Instruction
 In bash shell run the following commands:
