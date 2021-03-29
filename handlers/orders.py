@@ -78,10 +78,10 @@ def assign_orders():
         abort(400, 'Bad request')
     courier_id = content['courier_id']
 
-    if not db.check_courier(courier_id):
-        abort(400, 'Bad request')
-
     courier_info = db.get_courier(courier_id)
+
+    if courier_info is None:
+        abort(400, 'Bad request')
 
     courier_id = courier_info['courier_id']
     courier_type = courier_info['courier_type']
@@ -89,13 +89,16 @@ def assign_orders():
     regions = courier_info['regions']
     working_hours = courier_info['working_hours']
 
+    if not regions or not working_hours:
+        return jsonify(orders=[])
+
     # разделить на несколько функций
     # searching for relevant orders + assign
     relevant_orders, date_tz = db.find_relevant_orders(courier_id, max_weight, regions, working_hours)
     if not relevant_orders:
         return jsonify(orders=[])
 
-    return jsonify(orders=relevant_orders, assign_time=str(date_tz).replace(' ', 'T').replace('+00:00', 'Z')), 201
+    return jsonify(orders=relevant_orders, assign_time=str(date_tz).replace(' ', 'T').replace('+00:00', 'Z'))
 
 
 def valid_tz(dt):

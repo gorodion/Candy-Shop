@@ -71,6 +71,21 @@ class CandyShopDB:
         courier_values = self.curr.fetchone()
         courier_info = self.map_courier_info(courier_values)
 
+        # case when regions or working_hours fields are empty
+        if not courier_info['regions'] or not courier_info['working_hours']:
+            self.curr.execute(
+                f'''
+                UPDATE orders
+                SET
+                    courier_id=NULL,
+                    assign_time=NULL
+                WHERE
+                    courier_id={courier_id} AND
+                    complete_time IS NULL
+                '''
+            )
+            return courier_info
+
         # updating by weight and region
         # проверять assign_time?
         self.curr.execute(
