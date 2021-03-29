@@ -1,5 +1,6 @@
 from flask import jsonify, abort, request
 from dateutil.parser import parse
+from dateutil.tz import tzutc
 from misc import app, db
 from constants import REQUIRED_ORDER_FIELDS, COURIER_TYPE_CAPACITY
 from .common_funcs import validate_interval_list
@@ -128,10 +129,13 @@ def mark_as_completed():
     order_id = content['order_id']
     complete_time = parse(content['complete_time'])
 
-    correct_order = db.check_order_assignment(courier_id, order_id)
+    correct_order, assign_time = db.check_order_assignment(courier_id, order_id)
     if not correct_order:
         abort(400, 'Bad request')
 
-    # если complete_time позже assign_time
+    assign_time = assign_time.replace(tzinfo=tzutc())
+    if assign_time > complete_time:
+        abort(400, 'Bad request')
+
     db.mark_as_completed(courier_id, order_id, complete_time)
     return jsonify(order_id=order_id)

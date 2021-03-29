@@ -295,12 +295,13 @@ class CandyShopDB:
         res1 = [{'id': id} for id in res1]
         return res1, date_tz
 
+    # also returns assign_time
     def check_order_assignment(self, courier_id, order_id):
         self.check_connection()
         # дополнительно проверять, что assign_time не null?
         query = f'''
             SELECT
-                COUNT(*)
+                COUNT(*), assign_time
             FROM
                 orders
             WHERE
@@ -308,7 +309,7 @@ class CandyShopDB:
                 courier_id={courier_id}
         '''
         self.curr.execute(query)
-        return self.curr.fetchone()[0]
+        return self.curr.fetchone()
 
     def mark_as_completed(self, courier_id, order_id, complete_time):
         self.check_connection()
@@ -321,13 +322,6 @@ class CandyShopDB:
         if not_marked:
             self.curr.execute(
                 f'''
-                UPDATE orders
-                SET complete_time='{str(complete_time)}'
-                WHERE id={order_id} AND courier_id={courier_id}
-                '''
-            )
-            self.curr.execute(
-                f'''
                 UPDATE couriers 
                 SET earnings = earnings + 500 * (CASE 
                     WHEN courier_type='foot' THEN 2
@@ -337,7 +331,14 @@ class CandyShopDB:
                 WHERE id={courier_id}
                 '''
             )
-            self.conn.commit()
+        self.curr.execute(
+            f'''
+            UPDATE orders
+            SET complete_time='{str(complete_time)}'
+            WHERE id={order_id} AND courier_id={courier_id}
+            '''
+        )
+        self.conn.commit()
 
 
 def decorator(func):

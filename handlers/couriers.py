@@ -102,19 +102,11 @@ def patch_courier(courier_id):
     return jsonify(result)
 
 
-# @app.route('/couriers/<int:courier_id>', methods=['GET'])
-# def get_courier(courier_id):
-#     if not db.check_courier(courier_id):
-#         abort(404)
-#     res = db.get_courier(courier_id)
-#     if not res:
-#         abort(404)
-#     if res['rating'] == 0:
-#         res.pop('rating')
-#     return jsonify(res)
-
-# @app.route('/couriers/<int:courier_id>', methods=['GET'])
-# def get_courier(courier_id):
-#     if not db.check_courier(courier_id):
-#         abort(404)
-#     return jsonify(courier=db.get_courier(courier_id))
+@app.route('/couriers/<int:courier_id>', methods=['GET'])
+def get_courier(courier_id):
+    courier_info = db.get_courier(courier_id)
+    if courier_info is None:
+        abort(404)
+    if courier_info['rating'] == 0:
+        courier_info.pop('rating')
+    return jsonify(courier_info)
