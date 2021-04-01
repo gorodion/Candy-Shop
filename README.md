@@ -25,7 +25,8 @@ After that in MySQL command-line:
 ```sql
 CREATE USER 'YOUR_USER'@'localhost' IDENTIFIED BY 'YOUR_PASSWORD';
 GRANT ALL PRIVILEGES ON *.* TO 'YOUR_USER'@'localhost';
-CREATE DATABASE DATABASE_NAME
+CREATE DATABASE DATABASE_NAME;
+USE DATABASE_NAME
 SOURCE database/candy.sql
 ```
 Create file **config.py** with the following content:
